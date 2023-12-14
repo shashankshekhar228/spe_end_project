@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Plate Detection</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body style="font-family: Helvetica; background-color: rgb(5, 4, 4); color: rgb(232, 232, 232)">
+    <!--NAVBAR-->
+    <nav class="navbar navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <h1 class="display-6" >Car Plate Detection</h1>
+            </a>
+
+            <!-- <ul class="nav navbar-nav navbar-right">
+              <button class="btn btn-primary" onclick="video_page()">Real Time Detection</button>
+            </ul> -->
+
+            <ul class="nav navbar-nav navbar-right">
+                <a href="https://github.com/shashankshekhar228/spe_end_project" class="btn btn-primary">GitHub</a>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container text-center" style="margin-top:50px">
+        <br><br>
+        <h5 style=" font-weight: bold;">Welcome to the web-based application designed for the sophisticated task of license plate detection. Facilitate the process by submitting an image featuring a vehicle with its corresponding number plate, and entrust the model with the intricate task of swiftly identifying and pinpointing the license plate within the given image.
+        </h5>
+        <br>
+        <form action="#" method="POST" enctype="multipart/form-data">
+            <div class="input-group">
+                <input type="file" class="form-control" name="image" required>
+            </div>
+            <div style="text-align: center; margin-top: 10px;">
+                <input type="submit" value="Upload" class="btn btn-info" onclick="uploadImg(event)">
+            </div>
+        </form>
+    </div>
+
+    <div class="container mb-5">
+        <h3 style="margin-top: 1%; text-align: center; ">Utilize default images by simply clicking on them for predictive analysis.</h1>
+        <div class="row mt-5 text-center">
+          <div class="col-md-6">
+            <a href="#" onclick="sendImg('2.jpeg')">
+              <img src="static/Verification/2.jpeg" class="img-fluid" width="250">
+            </a>
+          </div>
+          <div class="col-md-6">
+            <a href="#" onclick="sendImg('4.jpeg')">
+              <img src="static/Verification/4.jpeg" class="img-fluid" width="250">
+            </a>
+          </div>
+          <div class="col-md-6 mt-5">
+            <a href="#" onclick="sendImg('8.jpeg')">
+              <img src="static/Verification/8.jpeg" class="img-fluid" width="250">
+            </a>
+          </div>
+          <div class="col-md-6 mt-5">
+            <a href="#" onclick="sendImg('14.jpg')">
+              <img src="static/Verification/14.jpg" class="img-fluid" width="250">
+            </a>
+          </div>
+        </div>
+    </div>
+    <hr style="border: none; border-top: 4px solid white;">
+
+    {% block body %}
+        
+    {% endblock %}
+    
+    <script>
+        default_upload = false;
+        upload = false;
+
+        function video_page() {
+          fetch('/rtod', {
+            method: 'POST'
+          })
+        }
+
+        function uploadImg(event) {
+          event.preventDefault();
+
+          const fileInput = event.target.form.elements.image;
+          const file = fileInput.files[0];
+
+          if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append('image', event.target.form.elements.image.files[0]);
+          fetch('/process_uploaded_image', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            // console.log(data);
+            var text = data['text'];
+            var filename = data['filename'];
+
+            document.getElementById('default_upload').style.display = 'none';
+            
+            default_upload = false;
+            upload = true;
+            if (upload) {
+                file1_path = "static/upload/"+filename;
+                file2_path = "static/predict/"+filename;
+                // console.log(file1_path, "\n", file2_path);
+                document.getElementById('upload').style.display = 'block';
+                document.getElementById('input1').src = file1_path;
+                document.getElementById('output1').src = file2_path;
+                document.getElementById('text1').innerHTML = text;
+                var div = document.getElementById("upload");
+                div.scrollIntoView({behavior: "smooth"});
+            }
+          })
+          .catch(error => {
+            console.error(error);
+          });
+        }
+
+        function sendImg(filename) {
+            $.ajax({
+                url: '/process_image',
+                type: 'POST',
+                data: {file_name: filename},
+                success: function(data) {
+                    // $('#text').text(data);
+                    // console.log(data);
+                    var text = data['text'];
+                    // console.log(text);
+
+                    document.getElementById('upload').style.display = 'none';
+
+                    upload = false;
+                    default_upload = true;
+                    if (default_upload) {
+                        file1_path = "static/Verification/"+filename;
+                        file2_path = "static/predict/"+filename;
+                        // console.log(file1_path, "\n", file2_path);
+                        document.getElementById('default_upload').style.display = 'block';
+                        document.getElementById('input').src = file1_path;
+                        document.getElementById('output').src = file2_path;
+                        document.getElementById('text').innerHTML = text;
+                        var div = document.getElementById("default_upload");
+                        div.scrollIntoView({behavior: "smooth"});
+                    }
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+
+
+        
+      </script>
+</body>
+</html>
+
+
+
+<!-- function sendImage(filename) {
+  fetch('/process_image', {
+    method: 'POST',
+    body: JSON.stringify({'filename': filename}),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.blob())
+  .then(blob => {
+    // console.log("Got Get");
+    // console.log(blob);
+
+    default_upload = true;
+    image_name = filename;
+
+    console.log(image_name);
+    console.log(default_upload);
+
+    if (default_upload) {
+        file1_path = "static/Verification/"+filename;
+        file2_path = "static/predict/"+filename;
+        console.log(file1_path, "\n", file2_path);
+        document.getElementById('default_upload').style.display = 'block';
+        document.getElementById('input').src = file1_path;
+        document.getElementById('output').src = file2_path;
+    }
+  })
+  .catch(error => console.error(error));
+} -->

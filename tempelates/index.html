@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    
+    <div class="container" style="display:none; text-align: center" id="default_upload">
+        <h3 style="margin-top: 1%; text-align: center;">Output of the model</h3>
+        <br>
+        <table style="border: solid black; width: 100%;">
+            <tr style="border: solid black;">
+                <th style="border-right:3px solid black">Uploaded Image</th>
+                <th>Detected Image</th>
+            </tr>
+            <tr style="border: solid black;">
+                <td style="border-right:3px solid black;">
+                    <img class="rounded float-left img-fluit" id="input" width="500" height="400" alt="">
+                </td>
+                <td>
+                    <img class="rounded float-right img-fluit" id="output" width="500" height="400" alt="">
+                </td>
+            </tr>
+
+        </table>
+        <br>
+        <table style="border: solid black; width: 100%; margin-bottom: 30px;">
+            <tr style="border: solid black;">
+                <th class="h2" style="border-right:3px solid black; background-color: rgba(137, 139, 132, 0.144);">Parsed text</th>
+                <th style="background-color: rgba(209, 212, 203, 0.144);">
+                    <h2 class="display-8" id="text"></h2>
+                </th>
+            </tr>
+        </table>
+    </div>
+
+
+
+
+
+    <div class="container" style="display:none; text-align: center" id="upload">
+        <h3 style="margin-top: 1%; text-align: center;">Output of the model</h3>
+        <br>
+        <table style="border: solid black; width: 100%;">
+            <tr style="border: solid black;">
+                <th style="border-right:3px solid black">Uploaded Image</th>
+                <th>Detected Image</th>
+            </tr>
+            <tr style="border: solid black;">
+                <td style="border-right:3px solid black;">
+                    <img class="rounded float-left img-fluit" id="input1" width="500" height="400" alt="">
+                </td>
+                <td>
+                    <img class="rounded float-right img-fluit" id="output1" width="500" height="400" alt="">
+                </td>
+            </tr>
+
+        </table>
+        <br>
+        <table style="border: solid black; width: 100%; margin-bottom: 30px;">
+            <tr style="border: solid black;">
+                <th class="h2" style="border-right:3px solid black; background-color: rgba(137, 139, 132, 0.144);">Parsed text</th>
+                <th style="background-color: rgba(209, 212, 203, 0.144);">
+                    <h2 class="display-8" id="text1"></h2>
+                </th>
+            </tr>
+        </table>
+    </div>
+    
+
+{% endblock  %}
