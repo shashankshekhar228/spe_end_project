@@ -1,0 +1,14 @@
+---
+- name: Pull docker image
+  hosts: all
+  tasks:
+          - name: Pull the image from dockerhub
+            docker_image:
+                  name: shashank389/spe_end_project 
+                  source: pull
+
+          - name: Write command after pulling image
+            shell: 'echo "Finished pulling image"'
+
+          - name: running container
+            shell: docker run -it -d shashank389/spe_end_project /bin/bash
