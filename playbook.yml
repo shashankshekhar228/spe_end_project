@@ -11,4 +11,4 @@
             shell: 'echo "Finished pulling image"'
 
           - name: running container
-            shell: docker run -it -d --name mycont shashank389/spe_end_project /bin/bash
+            shell: docker run -it -d shashank389/spe_end_project /bin/bash
