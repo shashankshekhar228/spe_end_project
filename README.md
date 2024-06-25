@@ -69,22 +69,3 @@ function xmlToJson(xml) {
 
     return parseElement(rootElementMatch[0]);
 }
-
-// Example usage
-const xml = `
-<note>
-  <to>Tove</to>
-  <from>Jani</from>
-  <heading>Reminder</heading>
-  <body>
-    <ar><title>Don't forget me this weekend!</title></ar>
-    <ar><title>divsbi</title></ar>
-  </body>
-  <selfClosingTag attribute="value"/>
-  <abc>shashank</abc>
-</note>
-`;
-
-const json = xmlToJson(xml);
-console.log(JSON.stringify(json, null, 2));
-console.log(json.note.to);
