@@ -62,7 +62,10 @@ function xmlToJson(xml) {
             }
         } else {
             // If no child elements, store inner text content
-            obj[currentTag] = innerXml.trim();
+            const innerText = innerXml.trim();
+            if (innerText) {
+                obj[currentTag]['#text'] = innerText;
+            }
         }
 
         return obj;
