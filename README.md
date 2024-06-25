@@ -3,36 +3,28 @@ function xmlToJson(xml) {
         const obj = {};
 
         // Match opening tag, attributes, and content (including self-closing tags)
-        const tagRegex = /^<([\w-]+)([^>]*)>([\s\S]*)<\/\1>$|^<([\w-]+)([^>]*)\/>$/;
+        const tagRegex = /^<([\w-]+)([^>]*)>([\s\S]*?)<\/\1>$|^<([\w-]+)([^>]*)\/>$/;
         const match = element.match(tagRegex);
         if (!match) return obj;
 
         const [, tagName, attributes, innerXml, selfClosingTag, selfClosingAttributes] = match;
-        if (selfClosingTag) {
-            // Handle self-closing tag
-            obj[selfClosingTag] = {};
-            if (selfClosingAttributes.trim()) {
-                // Process attributes
-                const attrRegex = /([\w-]+)="([^"]*)"/g;
-                let attrMatch;
-                while ((attrMatch = attrRegex.exec(selfClosingAttributes)) !== null) {
-                    const [, attrName, attrValue] = attrMatch;
-                    obj[selfClosingTag]['@attributes'] = obj[selfClosingTag]['@attributes'] || {};
-                    obj[selfClosingTag]['@attributes'][attrName] = attrValue;
-                }
-            }
-            return obj;
-        }
+        const currentTag = tagName || selfClosingTag;
+        const currentAttributes = attributes || selfClosingAttributes;
 
-        obj[tagName] = {};
+        obj[currentTag] = {};
 
         // Process attributes
         const attrRegex = /([\w-]+)="([^"]*)"/g;
         let attrMatch;
-        while ((attrMatch = attrRegex.exec(attributes)) !== null) {
+        while ((attrMatch = attrRegex.exec(currentAttributes)) !== null) {
             const [, attrName, attrValue] = attrMatch;
-            obj[tagName]['@attributes'] = obj[tagName]['@attributes'] || {};
-            obj[tagName]['@attributes'][attrName] = attrValue;
+            obj[currentTag]['@attributes'] = obj[currentTag]['@attributes'] || {};
+            obj[currentTag]['@attributes'][attrName] = attrValue;
+        }
+
+        if (selfClosingTag) {
+            // Handle self-closing tag
+            return obj;
         }
 
         // Process inner XML content (child elements or text content)
@@ -40,43 +32,28 @@ function xmlToJson(xml) {
         let childMatch;
         while ((childMatch = childRegex.exec(innerXml)) !== null) {
             const [, childTagName, childAttributes, childInnerXml, selfClosingChildTag, selfClosingChildAttributes] = childMatch;
-            if (selfClosingChildTag) {
-                // Handle self-closing child tag
-                const childElement = `<${selfClosingChildTag}${selfClosingChildAttributes}/>`;
-                const childObj = parseElement(childElement);
-
-                if (obj[tagName][selfClosingChildTag]) {
-                    if (!Array.isArray(obj[tagName][selfClosingChildTag])) {
-                        obj[tagName][selfClosingChildTag] = [obj[tagName][selfClosingChildTag]];
-                    }
-                    obj[tagName][selfClosingChildTag].push(childObj[selfClosingChildTag]);
-                } else {
-                    obj[tagName][selfClosingChildTag] = childObj[selfClosingChildTag];
-                }
-                continue;
-            }
-
-            const childElement = `<${childTagName}${childAttributes}>${childInnerXml}</${childTagName}>`;
+            const childElement = `<${childTagName || selfClosingChildTag}${childAttributes || selfClosingChildAttributes}${selfClosingChildTag ? ' /' : ''}>${childInnerXml || ''}</${childTagName || selfClosingChildTag}>`;
             const childObj = parseElement(childElement);
 
-            if (obj[tagName][childTagName]) {
-                if (!Array.isArray(obj[tagName][childTagName])) {
-                    obj[tagName][childTagName] = [obj[tagName][childTagName]];
+            const tagName = childTagName || selfClosingChildTag;
+            if (obj[currentTag][tagName]) {
+                if (!Array.isArray(obj[currentTag][tagName])) {
+                    obj[currentTag][tagName] = [obj[currentTag][tagName]];
                 }
-                obj[tagName][childTagName].push(childObj[childTagName]);
+                obj[currentTag][tagName].push(childObj[tagName]);
             } else {
-                obj[tagName][childTagName] = childObj[childTagName];
+                obj[currentTag][tagName] = childObj[tagName];
             }
         }
 
         // If no child elements, store inner text content
-        if (!Object.keys(obj[tagName]).length) {
-            obj[tagName] = innerXml.trim();
+        if (!Object.keys(obj[currentTag]).length) {
+            obj[currentTag] = innerXml.trim();
         } else {
             // If there are child elements, check for mixed content
             const textContent = innerXml.replace(childRegex, '').trim();
             if (textContent) {
-                obj[tagName]['#text'] = textContent;
+                obj[currentTag]['#text'] = textContent;
             }
         }
 
@@ -104,6 +81,7 @@ const xml = `
     <ar><title>divsbi</title></ar>
   </body>
   <selfClosingTag attribute="value"/>
+  <abc>shashank</abc>
 </note>
 `;
 
