@@ -30,31 +30,39 @@ function xmlToJson(xml) {
         // Process inner XML content (child elements or text content)
         const childRegex = /<([\w-]+)([^>]*)>([\s\S]*?)<\/\1>|<([\w-]+)([^>]*)\/>/g;
         let childMatch;
+        const children = [];
+        let lastIndex = 0;
         while ((childMatch = childRegex.exec(innerXml)) !== null) {
-            const [, childTagName, childAttributes, childInnerXml, selfClosingChildTag, selfClosingChildAttributes] = childMatch;
-            const childElement = `<${childTagName || selfClosingChildTag}${childAttributes || selfClosingChildAttributes}${selfClosingChildTag ? ' /' : ''}>${childInnerXml || ''}</${childTagName || selfClosingChildTag}>`;
-            const childObj = parseElement(childElement);
-
-            const tagName = childTagName || selfClosingChildTag;
-            if (obj[currentTag][tagName]) {
-                if (!Array.isArray(obj[currentTag][tagName])) {
-                    obj[currentTag][tagName] = [obj[currentTag][tagName]];
-                }
-                obj[currentTag][tagName].push(childObj[tagName]);
-            } else {
-                obj[currentTag][tagName] = childObj[tagName];
-            }
+            children.push({ match: childMatch, index: childMatch.index });
+            lastIndex = childMatch.index + childMatch[0].length;
         }
 
-        // If no child elements, store inner text content
-        if (!Object.keys(obj[currentTag]).length) {
-            obj[currentTag] = innerXml.trim();
-        } else {
+        if (children.length) {
+            for (let i = 0; i < children.length; i++) {
+                const { match, index } = children[i];
+                const [, childTagName, childAttributes, childInnerXml, selfClosingChildTag, selfClosingChildAttributes] = match;
+                const childElement = innerXml.substring(index, index + match[0].length);
+                const childObj = parseElement(childElement);
+
+                const tagName = childTagName || selfClosingChildTag;
+                if (obj[currentTag][tagName]) {
+                    if (!Array.isArray(obj[currentTag][tagName])) {
+                        obj[currentTag][tagName] = [obj[currentTag][tagName]];
+                    }
+                    obj[currentTag][tagName].push(childObj[tagName]);
+                } else {
+                    obj[currentTag][tagName] = childObj[tagName];
+                }
+            }
+
             // If there are child elements, check for mixed content
-            const textContent = innerXml.replace(childRegex, '').trim();
+            const textContent = innerXml.slice(lastIndex).trim();
             if (textContent) {
                 obj[currentTag]['#text'] = textContent;
             }
+        } else {
+            // If no child elements, store inner text content
+            obj[currentTag] = innerXml.trim();
         }
 
         return obj;
@@ -69,3 +77,14 @@ function xmlToJson(xml) {
 
     return parseElement(rootElementMatch[0]);
 }
+
+// Example usage:
+const xmlString = `
+<status>
+  <result>success</result>
+  <status>success</status>
+</status>
+`;
+
+const jsonObj = xmlToJson(xmlString);
+console.log(JSON.stringify(jsonObj, null, 2));
