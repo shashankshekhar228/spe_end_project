@@ -1,11 +1,11 @@
 function xmlToJson(xml) {
-    function parseElement(element) {
+    function parseElement(xml) {
         const obj = {};
 
         // Match opening tag, attributes, and content (including self-closing tags)
         const tagRegex = /^<([\w-]+)([^>]*)>([\s\S]*?)<\/\1>$|^<([\w-]+)([^>]*)\/>$/;
-        const match = element.match(tagRegex);
-        if (!match) return obj;
+        const match = xml.match(tagRegex);
+        if (!match) return xml.trim(); // Return text content directly if no match
 
         const [, tagName, attributes, innerXml, selfClosingTag, selfClosingAttributes] = match;
         const currentTag = tagName || selfClosingTag;
