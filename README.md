@@ -1,9 +1,9 @@
-function xmlToJson(xml) {
+ function xmlToJson(xml) {
     function parseElement(xml) {
         const obj = {};
 
         // Match opening tag, attributes, and content (including self-closing tags)
-        const tagRegex = /^<([\w-]+)([^>]*)>([\s\S]*?)<\/\1>$|^<([\w-]+)([^>]*)\/>$/;
+        const tagRegex = /<([\w-]+)([^>]*)>([\s\S]*?)<\/\1>|<([\w-]+)([^>]*)\/>/;
         const match = xml.match(tagRegex);
         if (!match) return xml.trim(); // Return text content directly if no match
 
@@ -14,12 +14,14 @@ function xmlToJson(xml) {
         obj[currentTag] = {};
 
         // Process attributes
-        const attrRegex = /([\w-]+)="([^"]*)"/g;
-        let attrMatch;
-        while ((attrMatch = attrRegex.exec(currentAttributes)) !== null) {
-            const [, attrName, attrValue] = attrMatch;
-            obj[currentTag]['@attributes'] = obj[currentTag]['@attributes'] || {};
-            obj[currentTag]['@attributes'][attrName] = attrValue;
+        if (currentAttributes) {
+            const attrRegex = /([\w-]+)="([^"]*)"/g;
+            let attrMatch;
+            while ((attrMatch = attrRegex.exec(currentAttributes)) !== null) {
+                const [, attrName, attrValue] = attrMatch;
+                obj[currentTag]['@attributes'] = obj[currentTag]['@attributes'] || {};
+                obj[currentTag]['@attributes'][attrName] = attrValue;
+            }
         }
 
         if (selfClosingTag) {
@@ -30,39 +32,30 @@ function xmlToJson(xml) {
         // Process inner XML content (child elements or text content)
         const childRegex = /<([\w-]+)([^>]*)>([\s\S]*?)<\/\1>|<([\w-]+)([^>]*)\/>/g;
         let childMatch;
-        const children = [];
-        let lastIndex = 0;
+        let textContent = '';
+
         while ((childMatch = childRegex.exec(innerXml)) !== null) {
-            children.push({ match: childMatch, index: childMatch.index });
-            lastIndex = childMatch.index + childMatch[0].length;
+            const [, childTagName, childAttributes, childInnerXml, selfClosingChildTag, selfClosingChildAttributes] = childMatch;
+            const childElement = childMatch[0];
+            const childObj = parseElement(childElement);
+
+            if (obj[currentTag][childTagName]) {
+                if (!Array.isArray(obj[currentTag][childTagName])) {
+                    obj[currentTag][childTagName] = [obj[currentTag][childTagName]];
+                }
+                obj[currentTag][childTagName].push(childObj[childTagName]);
+            } else {
+                obj[currentTag][childTagName] = childObj[childTagName];
+            }
         }
 
-        if (children.length) {
-            for (let i = 0; i < children.length; i++) {
-                const { match, index } = children[i];
-                const [, childTagName, childAttributes, childInnerXml, selfClosingChildTag, selfClosingChildAttributes] = match;
-                const childElement = innerXml.substring(index, index + match[0].length);
-                const childObj = parseElement(childElement);
+        // Check for text content if no child elements
+        if (!Object.keys(obj[currentTag]).length && innerXml.trim()) {
+            textContent = innerXml.trim();
+        }
 
-                const tagName = childTagName || selfClosingChildTag;
-                if (obj[currentTag][tagName]) {
-                    if (!Array.isArray(obj[currentTag][tagName])) {
-                        obj[currentTag][tagName] = [obj[currentTag][tagName]];
-                    }
-                    obj[currentTag][tagName].push(childObj[tagName]);
-                } else {
-                    obj[currentTag][tagName] = childObj[tagName];
-                }
-            }
-
-            // If there are child elements, check for mixed content
-            const textContent = innerXml.slice(lastIndex).trim();
-            if (textContent) {
-                obj[currentTag]['#text'] = textContent;
-            }
-        } else {
-            // If no child elements, store inner text content
-            obj[currentTag] = innerXml.trim();
+        if (textContent) {
+            obj[currentTag]['#text'] = textContent;
         }
 
         return obj;
